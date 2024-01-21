@@ -18,7 +18,7 @@ spring:
         - id: item-service
           uri: lb://item-service
           predicates:
-            - Path=/items/**
+            - Path=/items/**,/inventory/**
         - id: marketplace-service
           uri: lb://marketplace-service
           predicates:
