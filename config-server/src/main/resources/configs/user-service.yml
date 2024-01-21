@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: user-service
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+    generate-ddl: false
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:postgresql://localhost:5432/game
+    username: postgres
+    password: moo748
+    driverClassName: org.postgresql.Driver
+  main:
+    allow-circular-references: true
+
+  jwt:
+    secret: 984hg493gh0439rthr0429uruj2309yh937gc763fe87t3f89723gf
+    lifetime: 10m
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone:
+        - "http://localhost:8761/eureka"
