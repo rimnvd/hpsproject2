@@ -8,9 +8,7 @@ spring:
     config:
       server:
         git:
-          uri:
-            file:
-            - "D:/4/highload/high-perfomance-system-2/config-server/src/main/resources/configs"
+          uri: https://github.com/rimnvd/configs.git
 
 eureka:
   client:

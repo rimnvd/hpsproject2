@@ -102,7 +102,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
         UserEntity user = findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException(
                         String.format("Пользователь с именем '%s' не найден", username)));

@@ -4,20 +4,8 @@ server:
 spring:
   application:
     name: item-service
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-    generate-ddl: false
-    hibernate:
-      ddl-auto: update
-  datasource:
-    url: jdbc:postgresql://localhost:5432/game
-    username: postgres
-    password: moo748
-    driverClassName: org.postgresql.Driver
-  main:
-    allow-circular-references: true
+  config:
+    import: optional:configserver:http://localhost:8888
 
 eureka:
   client:
