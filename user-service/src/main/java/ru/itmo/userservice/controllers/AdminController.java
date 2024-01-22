@@ -39,7 +39,7 @@ public class AdminController {
 
     @PostMapping("/remove-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> removeAdminRole(@RequestBody @NotNull @Min(1) Long userId ) {
+    public ResponseEntity<?> removeAdminRole(@RequestBody @NotNull @Min(1) Long userId) {
         try {
             adminService.removeAdminRole(userId);
             return ResponseEntity.ok("Роль успешно удалена");
@@ -49,7 +49,7 @@ public class AdminController {
 
     @PostMapping("/premium")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> setPremiumUserRole(@RequestBody @NotNull @Min(1) Long userId ) {
+    public ResponseEntity<?> setPremiumUserRole(@RequestBody @NotNull @Min(1) Long userId) {
         try {
             adminService.setPremiumUserRole(userId);
             return ResponseEntity.ok("Роль успешно назначена");
@@ -59,7 +59,7 @@ public class AdminController {
 
     @PostMapping("/blocked")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> setBlockedUserRole(@RequestBody @NotNull @Min(1) Long userId ) {
+    public ResponseEntity<?> setBlockedUserRole(@RequestBody @NotNull @Min(1) Long userId) {
         try {
             adminService.setBlockedUserRole(userId);
             return ResponseEntity.ok("Роль успешно назначена");

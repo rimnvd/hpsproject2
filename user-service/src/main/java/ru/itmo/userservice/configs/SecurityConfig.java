@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("inventory/**", "users/buy-premium-account",
+                        .requestMatchers( "users/buy-premium",
                                 "users/replenish-balance").authenticated()
                         .anyRequest().permitAll())
                 .sessionManagement(
