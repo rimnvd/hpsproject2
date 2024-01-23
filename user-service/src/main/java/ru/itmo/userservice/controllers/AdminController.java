@@ -17,9 +17,9 @@ import ru.itmo.userservice.services.AdminService;
 public class AdminController {
 
     private final AdminService adminService;
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> deleteUser(@RequestBody @NotNull @Min(1) Long userId) {
+    public ResponseEntity<?> deleteUser(@PathVariable @NotNull @Min(1) Long userId) {
         try {
             adminService.deleteUser(userId);
             return ResponseEntity.ok("Пользователь с id " + userId + " успешно удален");
@@ -29,7 +29,7 @@ public class AdminController {
 
     @PostMapping("/set-admin")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> setAdminRole(@RequestBody @NotNull @Min(1) Long userId ) {
+    public ResponseEntity<?> setAdminRole(@RequestBody @NotNull @Min(1) Long userId) {
         try {
             adminService.setAdminRole(userId);
             return ResponseEntity.ok("Роль успешно назначена");

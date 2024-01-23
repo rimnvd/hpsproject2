@@ -59,8 +59,8 @@ public class UserController {
     }
 
     @GetMapping("/get-user")
-    public ResponseDto<UserEntity> getById(@RequestParam @NotNull @Min(1) Long id) {
-        UserEntity user = userService.getById(id);
+    public ResponseDto<UserDto> getById(@RequestParam @NotNull @Min(1) Long id) {
+        UserDto user = userService.getById(id);
         if (user == null) {
             return new ResponseDto<>(null, new NotFoundException(""),HttpStatus.NOT_FOUND);
         }

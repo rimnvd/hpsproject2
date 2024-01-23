@@ -6,7 +6,7 @@ import ru.itmo.itemservice.model.entity.ItemEntity;
 public class DtoConverter {
 
     public static ItemDto itemEntityToDto(ItemEntity itemEntity) {
-        return new ItemDto(itemEntity.getId(), itemEntity.getName(), itemEntity.getRarity());
+        return new ItemDto(itemEntity.getId(), itemEntity.getName(), itemEntity.getRarity().name());
     }
 
 //    public static MarketplaceItemDto marketplaceItemEntityToDto(MarketplaceItemEntity marketplaceItemEntity) {

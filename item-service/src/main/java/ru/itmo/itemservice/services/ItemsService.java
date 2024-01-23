@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.itmo.itemservice.clients.UserClient;
 import ru.itmo.itemservice.exceptions.NotFoundException;
-import ru.itmo.itemservice.model.dto.ResponseDto;
 import ru.itmo.itemservice.model.entity.ItemEntity;
-import ru.itmo.itemservice.model.entity.UserEntity;
 import ru.itmo.itemservice.model.enums.Rarity;
 import ru.itmo.itemservice.repositories.ItemsRepository;
 
@@ -23,10 +21,9 @@ public class ItemsService {
 
     @Transactional
     public ItemEntity generateRandomItemForUser(Long userId) throws NotFoundException {
-        ResponseDto<UserEntity> response = userClient.getById(userId);
-        if (!response.code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + userId + " не найден");
+        if (!userClient.getById(userId).code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + userId + " не найден");
         ItemEntity randomItem = createRandomItem();
-        randomItem.setUser(response.body());
+        randomItem.setUserId(userId);
         return itemsRepository.save(randomItem);
     }
 
@@ -34,6 +31,9 @@ public class ItemsService {
         return itemsRepository.findById(itemId);
     }
 
+    public ItemEntity getById(Long itemId) {
+        return itemsRepository.getItemEntityById(itemId);
+    }
     @Transactional
     public Optional<ItemEntity> deleteItemById(Long itemId) {
         return itemsRepository.deleteItemById(itemId);
@@ -47,9 +47,8 @@ public class ItemsService {
     @Transactional
     public void updateUserId(Long itemId, Long newUserId) throws NotFoundException {
         ItemEntity item = findItemById(itemId).orElseThrow(() -> new NotFoundException("Айтем с id: " + itemId + " не найден"));
-        ResponseDto<UserEntity> response = userClient.getById(newUserId);
-        if (!response.code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + newUserId + " не найден");
-        item.setUser(response.body());
+        if (!userClient.getById(newUserId).code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + newUserId + " не найден");
+        item.setUserId(newUserId);
         itemsRepository.save(item);
     }
 

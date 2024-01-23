@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.itmo.itemservice.model.enums.Rarity;
 
 @Getter
 @Setter
@@ -13,5 +12,6 @@ import ru.itmo.itemservice.model.enums.Rarity;
 public class ItemDto {
     Long id;
     String name;
-    Rarity rarity;
+    String rarity;
+
 }

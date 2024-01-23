@@ -69,12 +69,13 @@ public class ItemsController {
         return ResponseEntity.ok("Все айтемы успешно удалены");
     }
 
-    @GetMapping("/find")
-    public ResponseDto<ItemEntity> findById(@Positive @RequestParam Long itemId) {
-        Optional<ItemEntity> item = itemsService.findItemById(itemId);
-        return item
-                .map(itemEntity -> new ResponseDto<>(itemEntity, null, HttpStatus.OK))
-                .orElseGet(() -> new ResponseDto<>(null, new NotFoundException(""), HttpStatus.NOT_FOUND));
+    @GetMapping("/get-item")
+    public ResponseDto<ItemEntity> getById(@Positive @RequestParam Long itemId) {
+        ItemEntity item = itemsService.getById(itemId);
+        if (item == null) {
+            return new ResponseDto<>(null, new NotFoundException(""),HttpStatus.NOT_FOUND);
+        }
+        return new ResponseDto<>(item, null, HttpStatus.OK);
     }
 
     @PostMapping("change-user")

@@ -2,6 +2,7 @@ package ru.itmo.userservice.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.itmo.userservice.clients.InventoryClient;
 import ru.itmo.userservice.exceptions.NotFoundException;
 import ru.itmo.userservice.exceptions.UserBlockedException;
 import ru.itmo.userservice.model.entity.UserEntity;
@@ -11,8 +12,10 @@ import ru.itmo.userservice.model.entity.UserEntity;
 public class AdminService {
     private final UserService userService;
     private final RoleService roleService;
+    private final InventoryClient inventoryClient;
     public void deleteUser(Long id) throws NotFoundException {
         if (!userService.existsById(id)) throw new NotFoundException("Пользователь с id " + id + " не найден");
+        inventoryClient.deleteAll(id);
         userService.deleteById(id);
     }
 

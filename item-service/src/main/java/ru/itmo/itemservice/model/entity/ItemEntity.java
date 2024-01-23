@@ -1,6 +1,7 @@
 package ru.itmo.itemservice.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,7 @@ public class ItemEntity {
     @Enumerated(EnumType.STRING)
     private Rarity rarity;
 
-   @ManyToOne
-   @JoinColumn(name = "user_id", nullable = false)
-   private UserEntity user;
+    @Column(nullable = false)
+    @Positive
+    private Long userId;
 }

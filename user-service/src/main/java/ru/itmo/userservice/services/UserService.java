@@ -3,7 +3,6 @@ package ru.itmo.userservice.services;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,9 +25,6 @@ public class UserService implements UserDetailsService {
     private UserRepository userRepository;
     private RoleService roleService;
     private PasswordEncoder passwordEncoder;
-
-    private final ModelMapper mapper;
-
     @Autowired
     public void setUserRepository(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -52,8 +48,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findById(id);
     }
 
-    public UserEntity getById(Long id) {
-        return userRepository.getUserEntityById(id);
+    public UserDto getById(Long id) {
+        UserEntity user = userRepository.getUserEntityById(id);
+        return user != null ? userEntityToDto(user) : null;
     }
 
     public void save(UserEntity user) {
@@ -87,7 +84,7 @@ public class UserService implements UserDetailsService {
     }
 
     public List<UserDto> getAll(Pageable pageable) {
-        return userRepository.findAll(pageable).stream().map((user) -> (mapper.map(user, UserDto.class))).toList();
+        return userRepository.findAll(pageable).stream().map(this::userEntityToDto).toList();
     }
 
     public void buyPremiumAccount(String username) throws NotFoundException, NotEnoughMoneyException {
@@ -125,6 +122,18 @@ public class UserService implements UserDetailsService {
                 .roles(List.of(roleService.getStandardUserRole()))
                 .build();
         userRepository.save(user);
-        return mapper.map(user, UserDto.class);
+        return userEntityToDto(user);
     }
+
+    private UserDto userEntityToDto(UserEntity user) {
+        return UserDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .balance(user.getBalance())
+                .description(user.getDescription())
+                .roles(user.getRoles().stream().map(role -> role.getRole().name()).toList())
+                .build();
+    }
+
 }
