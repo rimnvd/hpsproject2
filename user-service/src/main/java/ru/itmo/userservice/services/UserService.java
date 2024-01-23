@@ -53,6 +53,11 @@ public class UserService implements UserDetailsService {
         return user != null ? userEntityToDto(user) : null;
     }
 
+    public UserDto getByUsername(String username) {
+        UserEntity user = userRepository.getUserEntityByUsername(username);
+        return user != null ? userEntityToDto(user) : null;
+    }
+
     public void save(UserEntity user) {
         userRepository.save(user);
     }

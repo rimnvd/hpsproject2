@@ -4,11 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-//import ru.itmo.hpsproject.model.entity.ItemEntity;
-import ru.itmo.userservice.model.entity.RoleEntity;
 
 import java.util.Collection;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -20,7 +17,5 @@ public class UserDto {
     String email;
     Integer balance;
     String description;
-//    List<ItemEntity> items;
-    Collection<RoleEntity> roles;
-
+    Collection<String> roles;
 }

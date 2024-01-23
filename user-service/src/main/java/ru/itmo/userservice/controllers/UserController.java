@@ -14,12 +14,10 @@ import ru.itmo.userservice.exceptions.NotFoundException;
 import ru.itmo.userservice.model.dto.ResponseDto;
 import ru.itmo.userservice.model.dto.UserDto;
 import ru.itmo.userservice.model.dto.UserUpdateBalanceDto;
-import ru.itmo.userservice.model.entity.UserEntity;
 import ru.itmo.userservice.services.UserService;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,8 +25,6 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
-
-
     @PostMapping("/replenish-balance")
     public ResponseEntity<?> replenishBalance(Principal principal, @RequestBody @NotNull @Min(1) Integer sum) {
         try {
@@ -58,7 +54,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/get-user")
+    @GetMapping("/get-user-by-id")
     public ResponseDto<UserDto> getById(@RequestParam @NotNull @Min(1) Long id) {
         UserDto user = userService.getById(id);
         if (user == null) {
@@ -66,12 +62,13 @@ public class UserController {
         }
         return new ResponseDto<>(user, null, HttpStatus.OK);
     }
-    @GetMapping("/find")
-    public ResponseDto<UserEntity> findByUsername(@RequestParam @NotNull String username) {
-        Optional<UserEntity> user = userService.findByUsername(username);
-        return user
-                .map(userEntity -> new ResponseDto<>(userEntity, null, HttpStatus.OK))
-                .orElseGet(() -> new ResponseDto<>(null, new NotFoundException(""), HttpStatus.NOT_FOUND));
+    @GetMapping("/get-user-by-username")
+    public ResponseDto<UserDto> findByUsername(@RequestParam @NotNull String username) {
+        UserDto user = userService.getByUsername(username);
+        if (user == null) {
+            return new ResponseDto<>(null, new NotFoundException(""),HttpStatus.NOT_FOUND);
+        }
+        return new ResponseDto<>(user, null, HttpStatus.OK);
     }
 
     @PostMapping("/update-balance")

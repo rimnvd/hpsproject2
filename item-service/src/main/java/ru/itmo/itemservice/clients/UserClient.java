@@ -10,7 +10,7 @@ import ru.itmo.itemservice.model.dto.UserDto;
 
 @FeignClient(name = "user-service", url = "localhost:8081")
 public interface UserClient {
-    @GetMapping("users/get-user")
+    @GetMapping("users/get-user-by-id")
     ResponseDto<UserDto> getById(@RequestParam @NotNull @Min(1) Long id);
 
 }
