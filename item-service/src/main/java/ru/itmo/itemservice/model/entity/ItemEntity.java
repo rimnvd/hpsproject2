@@ -1,30 +1,31 @@
 package ru.itmo.itemservice.model.entity;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.itmo.itemservice.model.enums.Rarity;
+import reactor.util.annotation.NonNull;
 
-@Entity(name = "items")
+@Table("items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ItemEntity {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    @NotBlank
+    @NonNull
+    @Column("name")
     private String name;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @NonNull
+    @Column("rarity")
     private Rarity rarity;
 
-    @Column(nullable = false)
-    @Positive
+    @NonNull
+    @Column("user_id")
     private Long userId;
 }

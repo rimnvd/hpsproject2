@@ -9,6 +9,6 @@ import ru.itmo.userservice.model.dto.ResponseDto;
 
 @FeignClient(name = "inventory-client", url = "localhost:8081")
 public interface InventoryClient {
-    @DeleteMapping("inventory/delete-user-inventory/{userId}")
+    @DeleteMapping("inventory/delete/{userId}")
     ResponseDto<Object> deleteAll(@PathVariable @Positive Long userId);
 }

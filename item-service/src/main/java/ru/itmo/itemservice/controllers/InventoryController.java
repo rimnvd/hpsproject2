@@ -5,10 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 import ru.itmo.itemservice.exceptions.NotFoundException;
 import ru.itmo.itemservice.model.dto.ItemDto;
 import ru.itmo.itemservice.model.dto.ResponseDto;
-import ru.itmo.itemservice.model.entity.ItemEntity;
 import ru.itmo.itemservice.services.InventoryService;
 import ru.itmo.itemservice.utils.DtoConverter;
 
@@ -25,40 +26,24 @@ public class InventoryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll(@RequestParam @Positive Long userId) {
-        try {
-            List<ItemEntity> inventoryItemsEntities = inventoryService.findUserInventory(userId);
-            List<ItemDto> inventoryItemsDtos = inventoryItemsEntities
-                    .stream()
-                    .map(DtoConverter::itemEntityToDto)
-                    .toList();
-            return ResponseEntity.ok(inventoryItemsDtos);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public Mono<ResponseEntity<List<ItemDto>>> getAll(@RequestParam Long userId) {
+        return inventoryService.findUserInventory(userId)
+                .collectList()
+                .flatMap(inventoryItemsEntities -> {
+                    List<ItemDto> inventoryItemsDtos = inventoryItemsEntities
+                            .stream()
+                            .map(DtoConverter::itemEntityToDto)
+                            .toList();
+
+                    return Mono.just(ResponseEntity.ok(inventoryItemsDtos));
+                })
+                .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage())));
     }
 
-//    @GetMapping("/get-user-inventory")
-//    public ResponseDto<List<ItemDto>> getAllUserItems(@RequestParam @Positive Long userId) {
-//        try {
-//            List<ItemEntity> inventoryItemsEntities = inventoryService.findUserInventory(userId);
-//            List<ItemDto> items = inventoryItemsEntities
-//                    .stream()
-//                    .map(DtoConverter::itemEntityToDto)
-//                    .toList();
-//            return new ResponseDto<>(items, null, HttpStatus.OK);
-//        } catch (NotFoundException e) {
-//            return new ResponseDto<>(null, new NotFoundException(""), HttpStatus.NOT_FOUND);
-//        }
-//    }
-
-    @DeleteMapping("/delete-user-inventory/{userId}")
-    public ResponseDto<Object> deleteAll(@PathVariable @Positive Long userId) {
-        try {
-            inventoryService.deleteUserInventory(userId);
-            return new ResponseDto<>(null, null, HttpStatus.OK);
-        } catch (NotFoundException e) {
-            return new ResponseDto<>(null, null, HttpStatus.NOT_FOUND);
-        }
+    @DeleteMapping("/delete/{userId}")
+    public Mono<ResponseDto<Object>> deleteAll(@PathVariable @Positive Long userId) {
+        return inventoryService.deleteUserInventory(userId)
+                .thenReturn(new ResponseDto<>(null, null, HttpStatus.OK))
+                .onErrorReturn(new ResponseDto<>(null, null, HttpStatus.NOT_FOUND));
     }
 }

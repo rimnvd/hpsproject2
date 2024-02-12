@@ -1,8 +1,8 @@
 package ru.itmo.itemservice.services;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import ru.itmo.itemservice.clients.UserClient;
 import ru.itmo.itemservice.exceptions.NotFoundException;
 import ru.itmo.itemservice.model.entity.ItemEntity;
@@ -19,41 +19,44 @@ public class ItemsService {
     private final ItemsRepository itemsRepository;
     private final UserClient userClient;
 
-    @Transactional
-    public ItemEntity generateRandomItemForUser(Long userId) throws NotFoundException {
-        if (!userClient.getById(userId).code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + userId + " не найден");
-        ItemEntity randomItem = createRandomItem();
-        randomItem.setUserId(userId);
-        return itemsRepository.save(randomItem);
+    public Mono<ItemEntity> generateRandomItemForUser(Long userId) {
+        return Mono.fromCallable(() -> {
+            if (!userClient.getById(userId).code().is2xxSuccessful()) {
+                throw new NotFoundException("Пользователь с id: " + userId + " не найден");
+            }
+            ItemEntity randomItem = createRandomItem(userId);
+            return randomItem;
+        }).flatMap(itemsRepository::save);
     }
 
-    public Optional<ItemEntity> findItemById(Long itemId) {
-        return itemsRepository.findById(itemId);
+    public Mono<ItemEntity> findItemById(Long itemId) {
+        return itemsRepository.findById(itemId)
+                .switchIfEmpty(Mono.error(() -> new NotFoundException("Айтем с id: " + itemId + " не найден")));
     }
 
-    public ItemEntity getById(Long itemId) {
-        return itemsRepository.getItemEntityById(itemId);
-    }
-    @Transactional
-    public Optional<ItemEntity> deleteItemById(Long itemId) {
-        return itemsRepository.deleteItemById(itemId);
+    public Mono<ItemEntity> deleteItemById(Long itemId) {
+        return itemsRepository.deleteItemById(itemId)
+                .switchIfEmpty(Mono.error(() -> new NotFoundException("Айтем с id: " + itemId + " не найден")));
     }
 
-    @Transactional
-    public void deleteAllItems() {
-        itemsRepository.deleteAll();
+    public Mono<Void> deleteAllItems() {
+        return itemsRepository.deleteAll();
     }
 
-    @Transactional
-    public void updateUserId(Long itemId, Long newUserId) throws NotFoundException {
-        ItemEntity item = findItemById(itemId).orElseThrow(() -> new NotFoundException("Айтем с id: " + itemId + " не найден"));
-        if (!userClient.getById(newUserId).code().is2xxSuccessful()) throw new NotFoundException("Пользователь с id: " + newUserId + " не найден");
-        item.setUserId(newUserId);
-        itemsRepository.save(item);
+    public Mono<?> updateUserId(Long itemId, Long newUserId) {
+        return findItemById(itemId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Айтем с id: " + itemId + " не найден")))
+                .flatMap(item -> Mono.defer(() -> {
+                    if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
+                        return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
+                    }
+                    item.setUserId(newUserId);
+                    return itemsRepository.save(item);
+                }));
     }
 
     // MARK: - Private
-    private ItemEntity createRandomItem() {
+    private ItemEntity createRandomItem(Long userId) {
         String[] titles = {"Sword", "Axe", "Pick", "Archery"};
         Rarity[] rarities = Rarity.values();
 
@@ -62,6 +65,6 @@ public class ItemsService {
         String randomTitle = titles[random.nextInt(titles.length)];
         Rarity randomRarity = rarities[random.nextInt(rarities.length)];
 
-        return new ItemEntity(null, randomTitle, randomRarity, null);
+        return new ItemEntity(null, randomTitle, randomRarity, userId);
     }
 }
