@@ -9,6 +9,7 @@ spring:
       server:
         git:
           uri: https://github.com/rimnvd/configs.git
+          default-label: master
 
 eureka:
   client:
