@@ -9,18 +9,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.itmo.marketplaceservice.model.dto.ResponseDto;
+import ru.itmo.marketplaceservice.model.dto.UserDto;
 import ru.itmo.marketplaceservice.model.dto.UserUpdateBalanceDto;
-import ru.itmo.marketplaceservice.model.entity.UserEntity;
 
-@FeignClient(name = "user-client", url = "localhost:8081")
+//@FeignClient(name = "user-client", url = "localhost:8081")
+@FeignClient(name = "user-client", url = "gateway-server:8081")
 public interface UserClient {
-    @GetMapping(path="users/get-user")
-    ResponseDto<UserEntity> getById(@RequestParam @NotNull @Min(1) Long id);
+    @GetMapping(path="users/get-user-by-id")
+    ResponseDto<UserDto> getById(@RequestParam @NotNull @Min(1) Long id);
 
-    @GetMapping("users/find")
-    ResponseDto<UserEntity> findByUsername(@RequestParam @NotNull String username);
+    @GetMapping("users/get-user-by-username")
+    ResponseDto<UserDto> findByUsername(@RequestParam @NotNull String username);
 
     @PostMapping("users/update-balance")
-    ResponseEntity<?> updateBalance(@RequestBody @NotNull UserUpdateBalanceDto userUpdateBalanceDto);
-
+    ResponseEntity<String> updateBalance(@RequestBody @NotNull UserUpdateBalanceDto userUpdateBalanceDto);
 }

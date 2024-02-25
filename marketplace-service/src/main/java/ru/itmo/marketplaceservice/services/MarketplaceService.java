@@ -10,16 +10,15 @@ import ru.itmo.marketplaceservice.clients.ItemClient;
 import ru.itmo.marketplaceservice.clients.UserClient;
 import ru.itmo.marketplaceservice.exceptions.NotEnoughMoneyException;
 import ru.itmo.marketplaceservice.exceptions.NotFoundException;
-import ru.itmo.marketplaceservice.model.dto.ResponseDto;
-import ru.itmo.marketplaceservice.model.dto.UpdateUserIdDto;
-import ru.itmo.marketplaceservice.model.dto.UserUpdateBalanceDto;
-import ru.itmo.marketplaceservice.model.entity.ItemEntity;
+import ru.itmo.marketplaceservice.model.dto.*;
 import ru.itmo.marketplaceservice.model.entity.MarketplaceItemEntity;
-import ru.itmo.marketplaceservice.model.entity.UserEntity;
 import ru.itmo.marketplaceservice.repositories.MarketplaceItemsRepository;
+
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +39,9 @@ public class MarketplaceService {
     }
 
     public List<MarketplaceItemEntity> findMarketplaceItemsByUser(String userName) throws NotFoundException {
-        ResponseDto<UserEntity> response = userClient.findByUsername(userName);
+        ResponseDto<UserDto> response = userClient.findByUsername(userName);
         if (!response.code().is2xxSuccessful()) throw new NotFoundException("Пользователь с именем " + userName + " не найден");
-        return marketplaceRepository.findByItemUser(response.body());
+        return marketplaceRepository.findByUserName(response.body().getUsername());
     }
 
     @Transactional
@@ -51,48 +50,62 @@ public class MarketplaceService {
             Long itemId,
             int price
     ) throws NotFoundException, IllegalArgumentException {
-        ResponseDto<ItemEntity> itemResponse = itemClient.findById(itemId);
+        ResponseDto<ItemDto> itemResponse = itemClient.getById(itemId);
+
+        // Нужно сделать проверку, что айтем принадлежит пользователю
+
         if (!itemResponse.code().is2xxSuccessful()) throw new NotFoundException("Айтем с id: " + itemId + " не найден");
-        if (marketplaceRepository.existsByItem(itemResponse.body())) {
+        if (marketplaceRepository.existsByItemId(itemResponse.body().getId())) {
             throw new IllegalArgumentException("Айтем с id " + itemId + " уже находится на торговой площадке");
         }
-        ResponseDto<UserEntity> userResponse = userClient.findByUsername(userName);
+        ResponseDto<UserDto> userResponse = userClient.findByUsername(userName);
         if (!userResponse.code().is2xxSuccessful()) throw new NotFoundException("User with name " + userName + " not found");
-        UserEntity seller = userResponse.body();
-        if (!seller.getItems().contains(itemResponse.body())) {
-            throw new IllegalArgumentException("Item with id " + itemId + " is not item of user");
-        }
+
         MarketplaceItemEntity marketplaceItemEntity = new MarketplaceItemEntity();
-        marketplaceItemEntity.setItem(itemResponse.body());
+        marketplaceItemEntity.setItemId(itemResponse.body().getId());
+        marketplaceItemEntity.setItemName(itemResponse.body().getName());
+        marketplaceItemEntity.setRarity(itemResponse.body().getRarity());
         marketplaceItemEntity.setPrice(price);
+        marketplaceItemEntity.setUserName(userResponse.body().getUsername());
         return marketplaceRepository.save(marketplaceItemEntity);
     }
+
     @Transactional
     public void purchaseMarketplaceItem(String buyerUserName, Long marketplaceItemId) throws NotFoundException, NotEnoughMoneyException, IllegalArgumentException {
-        ResponseDto<UserEntity> userResponse = userClient.findByUsername(buyerUserName);
+        ResponseDto<UserDto> userResponse = userClient.findByUsername(buyerUserName);
         if (!userResponse.code().is2xxSuccessful()) throw new NotFoundException("User with name " + buyerUserName + " not found");
-        UserEntity buyer = userResponse.body();
+        UserDto buyer = userResponse.body();
         MarketplaceItemEntity marketplaceItem = marketplaceRepository.findById(marketplaceItemId)
                 .orElseThrow(() -> new NotFoundException("Item with id " + marketplaceItemId + " not found on the marketplace"));
-        if (marketplaceItem.getItem().getUser().getId().equals(buyer.getId())) {
+        if (marketplaceItem.getUserName().equals(buyer.getUsername())) {
             throw new IllegalArgumentException("Нельзя купить айтем у самого себя");
         }
         if (buyer.getBalance() < marketplaceItem.getPrice()) {
             throw new NotEnoughMoneyException();
         }
-        UserEntity seller = marketplaceItem.getItem().getUser();
-        userClient.updateBalance(new UserUpdateBalanceDto(seller.getId(), seller.getBalance() + marketplaceItem.getPrice()));
-        userClient.updateBalance(new UserUpdateBalanceDto(buyer.getId(), buyer.getBalance() - marketplaceItem.getPrice()));
-        ItemEntity item = marketplaceItem.getItem();
-        itemClient.updateUserId(new UpdateUserIdDto(item.getId(), buyer.getId()));
+        ResponseDto<UserDto> seller = userClient.findByUsername(marketplaceItem.getUserName());
+        ResponseEntity<String> updateBalanceResult1 = userClient.updateBalance(new UserUpdateBalanceDto(seller.body().getUsername(), seller.body().getBalance() + marketplaceItem.getPrice()));
+        if (!updateBalanceResult1.getStatusCode().is2xxSuccessful()) throw new IllegalArgumentException("Нельзя совершить данную покупку");
+        ResponseEntity<String> updateBalanceResult2 = userClient.updateBalance(new UserUpdateBalanceDto(buyer.getUsername(), buyer.getBalance() - marketplaceItem.getPrice()));
+        if (!updateBalanceResult2.getStatusCode().is2xxSuccessful()) throw new IllegalArgumentException("Нельзя совершить данную покупку");
+        Long itemId = marketplaceItem.getItemId();
+        ResponseEntity<String> updateIdResult = itemClient.updateUserId(new UpdateUserIdDto(buyer.getId(), itemId));
+        if (!updateIdResult.getStatusCode().is2xxSuccessful()) throw new IllegalArgumentException("Нельзя совершить данную покупку");
         marketplaceRepository.deleteById(marketplaceItemId);
     }
-    @Transactional
-    public Optional<MarketplaceItemEntity> deleteMarketplaceItemById(Long itemId) {
-        return marketplaceRepository.deleteMarketplaceItemById(itemId);
+
+    public Mono<MarketplaceItemEntity> deleteMarketplaceItemById(Long itemId) {
+        return Mono.defer(() -> {
+            Optional<MarketplaceItemEntity> optionalItem = marketplaceRepository.deleteMarketplaceItemById(itemId);
+            if (optionalItem.isPresent()) {
+                return Mono.just(optionalItem.get());
+            } else {
+                return Mono.error(new NotFoundException("Айтем с id: " + itemId + " не найден"));
+            }
+        });
     }
-    @Transactional
-    public void deleteAllMarketplaceItems() {
-        marketplaceRepository.deleteAll();
+
+    public Mono<Void> deleteAllMarketplaceItems() {
+        return Mono.fromRunnable(() -> marketplaceRepository.deleteAll());
     }
 }

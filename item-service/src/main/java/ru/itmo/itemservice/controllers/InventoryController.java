@@ -12,6 +12,10 @@ import ru.itmo.itemservice.model.dto.ItemDto;
 import ru.itmo.itemservice.model.dto.ResponseDto;
 import ru.itmo.itemservice.services.InventoryService;
 import ru.itmo.itemservice.utils.DtoConverter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 
 import java.util.List;
 
@@ -26,6 +30,15 @@ public class InventoryController {
     }
 
     @GetMapping
+    @Operation(
+            description = "get user inventory",
+            summary = "get user inventory by id if exists",
+            tags = "inventory"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "user inventory found"),
+            @ApiResponse(responseCode = "404", description = "user not found")
+    })
     public Mono<ResponseEntity<List<ItemDto>>> getAll(@RequestParam Long userId) {
         return inventoryService.findUserInventory(userId)
                 .collectList()
@@ -41,9 +54,18 @@ public class InventoryController {
     }
 
     @DeleteMapping("/delete/{userId}")
-    public Mono<ResponseDto<Object>> deleteAll(@PathVariable @Positive Long userId) {
+    @Operation(
+            description = "delete user inventory",
+            summary = "delete user inventory by id if exists",
+            tags = "inventory"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "user inventory deleted"),
+            @ApiResponse(responseCode = "404", description = "user not found")
+    })
+    public ResponseEntity<String> deleteAll(@PathVariable @Positive Long userId) {
         return inventoryService.deleteUserInventory(userId)
-                .thenReturn(new ResponseDto<>(null, null, HttpStatus.OK))
-                .onErrorReturn(new ResponseDto<>(null, null, HttpStatus.NOT_FOUND));
+                .thenReturn(ResponseEntity.ok("Успешно удалено"))
+                .onErrorReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь с id " + userId + " не найден")).block();
     }
 }

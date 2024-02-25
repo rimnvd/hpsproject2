@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 import ru.itmo.marketplaceservice.exceptions.NotEnoughMoneyException;
 import ru.itmo.marketplaceservice.exceptions.NotFoundException;
 import ru.itmo.marketplaceservice.model.dto.BuyMarketplaceItemRequestDto;
@@ -23,7 +25,6 @@ import ru.itmo.marketplaceservice.utils.DtoConverter;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Optional;
 
 @RequestMapping(path = "/marketplace")
 @RestController
@@ -131,20 +132,17 @@ public class MarketplaceController {
         }
     }
 
-    @DeleteMapping("/delete-marketplace-item/{itemId}")
-    public ResponseEntity<?> deleteItemById(@PathVariable @Positive Long itemId) {
-        Optional<MarketplaceItemEntity> marketplaceItemEntity = marketplaceService.deleteMarketplaceItemById(itemId);
-        if (marketplaceItemEntity.isPresent()) {
-            return ResponseEntity.ok("Айтем успешно удален");
-        } else {
-            return ResponseEntity.badRequest().body("Айтем с id: " + itemId + " не найден");
-        }
+    @DeleteMapping("/delete/{itemId}")
+    public Mono<ResponseEntity<String>> deleteItemById(@PathVariable @Positive Long itemId) {
+        return marketplaceService.deleteMarketplaceItemById(itemId)
+                .map(item -> ResponseEntity.ok("Айтем с id: " + itemId + " успешно удален"))
+                .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e)));
     }
 
-    @DeleteMapping("/delete-all")
+    @DeleteMapping("/delete")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<?> deleteAll() {
-        marketplaceService.deleteAllMarketplaceItems();
-        return ResponseEntity.ok("Все айтемы успешно удалены");
+    public Mono<ResponseEntity<?>> deleteAll() {
+        return marketplaceService.deleteAllMarketplaceItems()
+                .then(Mono.just(ResponseEntity.ok("Все айтемы успешно удалены")));
     }
 }

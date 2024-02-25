@@ -32,7 +32,7 @@ public class InventoryService {
         return Mono.fromCallable(() -> userClient.getById(userId))
                 .flatMap(response -> {
                     if (response.code().is2xxSuccessful()) {
-                        return itemsRepository.deleteItemEntitiesByUserId(userId).then();
+                        return itemsRepository.deleteItemEntitiesByUserId(userId);
                     } else {
                         return Mono.error(new NotFoundException("Пользователь с id: " + userId + " не найден"));
                     }

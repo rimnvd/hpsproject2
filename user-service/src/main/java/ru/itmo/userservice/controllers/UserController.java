@@ -25,6 +25,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
     @PostMapping("/replenish-balance")
     public ResponseEntity<?> replenishBalance(Principal principal, @RequestBody @NotNull @Min(1) Integer sum) {
         try {
@@ -66,15 +67,15 @@ public class UserController {
     public ResponseDto<UserDto> findByUsername(@RequestParam @NotNull String username) {
         UserDto user = userService.getByUsername(username);
         if (user == null) {
-            return new ResponseDto<>(null, new NotFoundException(""),HttpStatus.NOT_FOUND);
+            return new ResponseDto<>(null, new NotFoundException(""), HttpStatus.NOT_FOUND);
         }
         return new ResponseDto<>(user, null, HttpStatus.OK);
     }
 
     @PostMapping("/update-balance")
-    public ResponseEntity<?> updateBalance(@RequestBody @NotNull @Valid UserUpdateBalanceDto userUpdateBalanceDto) {
+    public ResponseEntity<String> updateBalance(@RequestBody @Valid UserUpdateBalanceDto userUpdateBalanceDto) {
         try {
-            userService.updateBalance(userUpdateBalanceDto.getUserId(), userUpdateBalanceDto.getNewBalance());
+            userService.updateBalance(userUpdateBalanceDto.getUserName(), userUpdateBalanceDto.getNewBalance());
             return ResponseEntity.ok("");
         } catch (NotFoundException e) {
             return ResponseEntity.badRequest().body("");

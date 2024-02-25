@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,16 +16,16 @@ import ru.itmo.itemservice.exceptions.NotFoundException;
 import ru.itmo.itemservice.model.dto.ItemDto;
 import ru.itmo.itemservice.model.dto.ResponseDto;
 import ru.itmo.itemservice.model.dto.UpdateUserIdDto;
-import ru.itmo.itemservice.model.entity.ItemEntity;
 import ru.itmo.itemservice.services.ItemsService;
 import ru.itmo.itemservice.utils.DtoConverter;
 
-import java.util.Optional;
-
 @RestController
 @RequestMapping("/items")
+@RefreshScope
 public class ItemsController {
 
+    @Value("${example.property}")
+    private String refreshingExampleProperty;
     private final ItemsService itemsService;
 
     @Autowired
@@ -69,18 +71,24 @@ public class ItemsController {
     }
 
     @GetMapping("/get-item")
-    public Mono<ResponseDto<ItemEntity>> getById(@Positive @RequestParam Long itemId) {
+    public ResponseDto<ItemDto> getById(@Positive @RequestParam Long itemId) {
         return itemsService.findItemById(itemId)
                 .map(itemEntity -> {
-                    return new ResponseDto<>(itemEntity, null, HttpStatus.OK);
+                    ItemDto itemDto = DtoConverter.itemEntityToDto(itemEntity);
+                    return new ResponseDto<>(itemDto, null, HttpStatus.OK);
                 })
-                .onErrorResume(NotFoundException.class, e -> Mono.just(new ResponseDto<>(null, e, HttpStatus.NOT_FOUND)));
+                .onErrorResume(NotFoundException.class, e -> Mono.just(new ResponseDto<>(null, e, HttpStatus.NOT_FOUND))).block();
     }
 
     @PostMapping("change-user")
-    public Mono<ResponseEntity<String>> updateUserId(@RequestBody @NotNull @Valid UpdateUserIdDto updateUserIdDto) {
+    public ResponseEntity<String> updateUserId(@RequestBody @NotNull @Valid UpdateUserIdDto updateUserIdDto) {
         return itemsService.updateUserId(updateUserIdDto.getItemId(), updateUserIdDto.getUserId())
                 .then(Mono.just(ResponseEntity.ok("user_id успешно изменен")))
-                .onErrorResume(NotFoundException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage())));
+                .onErrorResume(NotFoundException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()))).block();
+    }
+
+    @GetMapping("/example-property")
+    public String getExampleProperty() {
+        return "Value of example.property: " + refreshingExampleProperty;
     }
 }

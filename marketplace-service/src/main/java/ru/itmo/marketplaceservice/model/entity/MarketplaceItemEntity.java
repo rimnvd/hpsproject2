@@ -16,11 +16,19 @@ public class MarketplaceItemEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "item_id", nullable = false)
-    private ItemEntity item;
-
     @Column(nullable = false)
     @Range(min = 1, max = 1000000)
     private int price;
+
+    @Column(name = "user_name", nullable = false)
+    private String userName;
+
+    @Column(name = "item_name", nullable = false)
+    private String itemName;
+
+    @Column(name = "item_id", nullable = false)
+    private Long itemId;
+
+    @Column(name = "rarity", nullable = false)
+    private String rarity;
 }

@@ -13,7 +13,7 @@ import ru.itmo.userservice.services.AdminService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("admin")
+@RequestMapping("/admin")
 public class AdminController {
 
     private final AdminService adminService;
@@ -54,7 +54,8 @@ public class AdminController {
             adminService.setPremiumUserRole(userId);
             return ResponseEntity.ok("Роль успешно назначена");
         } catch (NotFoundException | UserBlockedException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());        }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @PostMapping("/blocked")

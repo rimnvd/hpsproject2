@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.itmo.itemservice.clients.UserClient;
 import ru.itmo.itemservice.exceptions.NotFoundException;
+import ru.itmo.itemservice.exceptions.ServiceUnavailableException;
 import ru.itmo.itemservice.model.entity.ItemEntity;
 import ru.itmo.itemservice.model.enums.Rarity;
 import ru.itmo.itemservice.repositories.ItemsRepository;
 
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -43,13 +43,24 @@ public class ItemsService {
         return itemsRepository.deleteAll();
     }
 
-    public Mono<?> updateUserId(Long itemId, Long newUserId) {
+    public Mono<ItemEntity> updateUserId(Long itemId, Long newUserId) {
         return findItemById(itemId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Айтем с id: " + itemId + " не найден")))
                 .flatMap(item -> Mono.defer(() -> {
-                    if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
-                        return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
+
+                    try {
+                        if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
+                            return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
+                        }
+//                        userClient.getById(newUserId)
+                    } catch (ServiceUnavailableException e) {
+                        return Mono.error(new ServiceUnavailableException("Пользователь с id: " + newUserId + " не найден"));
                     }
+
+//                    if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
+//                        return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
+//                    }
+
                     item.setUserId(newUserId);
                     return itemsRepository.save(item);
                 }));

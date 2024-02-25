@@ -25,6 +25,9 @@ public class UserService implements UserDetailsService {
     private UserRepository userRepository;
     private RoleService roleService;
     private PasswordEncoder passwordEncoder;
+
+    private NotificationService notificationService;
+
     @Autowired
     public void setUserRepository(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -38,6 +41,11 @@ public class UserService implements UserDetailsService {
     @Autowired
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
     public Optional<UserEntity> findByUsername(String username) {
@@ -74,9 +82,9 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByUsername(username);
     }
 
-    public void updateBalance(Long userId, Integer newBalance) throws NotFoundException {
-        UserEntity user = findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+    public void updateBalance(String username, Integer newBalance) throws NotFoundException {
+        UserEntity user = findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Пользователь с ником " + username + " не найден"));
         user.setBalance(newBalance);
         userRepository.save(user);
     }
@@ -127,6 +135,7 @@ public class UserService implements UserDetailsService {
                 .roles(List.of(roleService.getStandardUserRole()))
                 .build();
         userRepository.save(user);
+        notificationService.sendRegistrationEmailNotification(userRegisterRequest.getEmail(), userRegisterRequest.getUsername());
         return userEntityToDto(user);
     }
 

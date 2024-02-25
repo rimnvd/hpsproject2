@@ -13,6 +13,6 @@ import ru.itmo.marketplaceservice.model.enums.Rarity;
 public class MarketplaceItemDto {
     Long id;
     String name;
-    Rarity rarity;
+    String rarity;
     int price;
 }
