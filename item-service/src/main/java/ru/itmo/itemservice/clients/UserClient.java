@@ -10,7 +10,7 @@ import ru.itmo.itemservice.exceptions.ServiceUnavailableException;
 import ru.itmo.itemservice.model.dto.ResponseDto;
 import ru.itmo.itemservice.model.dto.UserDto;
 
-//@FeignClient(name = "user-service", url = "localhost:8081")
+//@FeignClient(name = "user-service", url = "localhost:8081", fallback = UserClient.UserClientFallback.class)
 @FeignClient(name = "user-service", url = "gateway-server:8081", fallback = UserClient.UserClientFallback.class)
 public interface UserClient {
 

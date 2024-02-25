@@ -10,7 +10,7 @@ import ru.itmo.userservice.exceptions.ServiceUnavailableException;
 import ru.itmo.userservice.model.dto.ResponseDto;
 
 
-//@FeignClient(name = "inventory-client", url = "localhost:8081")
+//@FeignClient(name = "inventory-client", url = "localhost:8081", fallback = InventoryClient.InventoryClientFallback.class)
 @FeignClient(name = "inventory-client",url = "gateway-server:8081", fallback = InventoryClient.InventoryClientFallback.class)
 public interface InventoryClient {
     @DeleteMapping("inventory/delete/{userId}")
