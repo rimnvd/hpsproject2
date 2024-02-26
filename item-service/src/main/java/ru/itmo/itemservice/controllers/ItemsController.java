@@ -1,5 +1,8 @@
 package ru.itmo.itemservice.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -33,6 +36,15 @@ public class ItemsController {
         this.itemsService = itemsService;
     }
 
+    @Operation(
+            description = "generate item for user",
+            summary = "generate random item for user if user exists",
+            tags = "item"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "item was generated successfully"),
+            @ApiResponse(responseCode = "404", description = "user not found")
+    })
     @PostMapping("/generate")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<ItemDto>> generateRandomItem(@Positive @RequestParam Long userId) {
