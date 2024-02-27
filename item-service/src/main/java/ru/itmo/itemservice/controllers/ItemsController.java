@@ -1,5 +1,9 @@
 package ru.itmo.itemservice.controllers;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -33,6 +37,17 @@ public class ItemsController {
         this.itemsService = itemsService;
     }
 
+    @Operation(
+            description = "Generate item for user",
+            summary = "Generate random item for user if user exists",
+            tags = "item"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Item was generated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights")
+    })
     @PostMapping("/generate")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<ItemDto>> generateRandomItem(@Positive @RequestParam Long userId) {
@@ -44,6 +59,16 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e)));
     }
 
+
+    @Operation(
+            description = "Get by id",
+            summary = "Get item by id if exists",
+            tags = "item"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Item was found successfully"),
+            @ApiResponse(responseCode = "404", description = "Item not found")
+    })
     @GetMapping("/item")
     public Mono<ResponseEntity<ItemDto>> getItemById(@Positive @RequestParam Long itemId) {
         return itemsService.findItemById(itemId)
@@ -54,6 +79,18 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e)));
     }
 
+    @Operation(
+            description = "Delete item",
+            summary = "Delete item by id",
+            tags = "item"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Item was deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Item not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights")
+
+    })
     @DeleteMapping("/delete/{itemId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<String>> deleteItemById(@Positive @PathVariable Long itemId) {
@@ -62,6 +99,16 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e)));
     }
 
+    @Operation(
+            description = "Delete all",
+            summary = "Delete all items",
+            tags = "Item"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All items were deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights")
+    })
     @DeleteMapping("/delete-all")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<String>> deleteAll() {
@@ -70,6 +117,7 @@ public class ItemsController {
                 .onErrorResume(Exception.class, e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка удаления айтемов: " + e.getMessage())));
     }
 
+    @Hidden
     @GetMapping("/get-item")
     public ResponseDto<ItemDto> getById(@Positive @RequestParam Long itemId) {
         return itemsService.findItemById(itemId)
@@ -80,6 +128,7 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.just(new ResponseDto<>(null, e, HttpStatus.NOT_FOUND))).block();
     }
 
+    @Hidden
     @PostMapping("/change-user")
     public ResponseEntity<String> updateUserId(@RequestBody @NotNull @Valid UpdateUserIdDto updateUserIdDto) {
         return itemsService.updateUserId(updateUserIdDto.getItemId(), updateUserIdDto.getUserId())
@@ -92,3 +141,4 @@ public class ItemsController {
         return "Value of example.property: " + refreshingExampleProperty;
     }
 }
+
