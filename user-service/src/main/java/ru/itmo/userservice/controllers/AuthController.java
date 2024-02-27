@@ -41,7 +41,7 @@ public class AuthController {
     @Operation(
             description = "Register",
             summary = "New user register",
-            tags = "Admin"
+            tags = "Auth"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User has successfully registered"),
