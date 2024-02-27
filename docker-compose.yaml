@@ -70,7 +70,8 @@ services:
       context: ./item-service
       dockerfile: Dockerfile
     depends_on:
-      - user-service
+      - config-server
+      - postgres
 
   marketplace-service:
     image: marketplace-service:latest
@@ -79,4 +80,5 @@ services:
       context: ./marketplace-service
       dockerfile: Dockerfile
     depends_on:
-      - item-service
+      - config-server
+      - postgres
