@@ -141,3 +141,4 @@ public class ItemsController {
         return "Value of example.property: " + refreshingExampleProperty;
     }
 }
+
