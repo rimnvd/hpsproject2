@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import ru.itmo.marketplaceservice.clients.ItemClient;
 import ru.itmo.marketplaceservice.clients.UserClient;
 import ru.itmo.marketplaceservice.exceptions.NotEnoughMoneyException;
@@ -30,12 +32,13 @@ public class MarketplaceService {
 
     private final ItemClient itemClient;
 
-    public Page<MarketplaceItemEntity> findAll(int minPrice, int maxPrice, Pageable pageable) {
-        return marketplaceRepository.findAllByPriceBetween(minPrice, maxPrice, pageable);
+    public Mono<Page<MarketplaceItemEntity>> findAll(int minPrice, int maxPrice, Pageable pageable) {
+        return Mono.fromCallable(() -> marketplaceRepository.findAllByPriceBetween(minPrice, maxPrice, pageable))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public List<MarketplaceItemEntity> findMarketplaceItemsByName(String name) {
-        return marketplaceRepository.findByItemNameStartingWith(name);
+    public Flux<MarketplaceItemEntity> findMarketplaceItemsByName(String name) {
+        return Flux.defer(() -> Flux.fromIterable(marketplaceRepository.findByItemNameStartingWith(name)));
     }
 
     public List<MarketplaceItemEntity> findMarketplaceItemsByUser(String userName) throws NotFoundException {
@@ -52,14 +55,14 @@ public class MarketplaceService {
     ) throws NotFoundException, IllegalArgumentException {
         ResponseDto<ItemDto> itemResponse = itemClient.getById(itemId);
 
-        // Нужно сделать проверку, что айтем принадлежит пользователю
-
         if (!itemResponse.code().is2xxSuccessful()) throw new NotFoundException("Айтем с id: " + itemId + " не найден");
         if (marketplaceRepository.existsByItemId(itemResponse.body().getId())) {
             throw new IllegalArgumentException("Айтем с id " + itemId + " уже находится на торговой площадке");
         }
         ResponseDto<UserDto> userResponse = userClient.findByUsername(userName);
         if (!userResponse.code().is2xxSuccessful()) throw new NotFoundException("User with name " + userName + " not found");
+
+        if (!(userResponse.body().getId().equals(itemResponse.body().getUserId()))) throw new IllegalArgumentException("Айтем не принадлежит пользователю");
 
         MarketplaceItemEntity marketplaceItemEntity = new MarketplaceItemEntity();
         marketplaceItemEntity.setItemId(itemResponse.body().getId());

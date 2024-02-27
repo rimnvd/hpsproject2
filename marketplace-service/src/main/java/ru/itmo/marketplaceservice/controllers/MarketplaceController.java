@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.itmo.marketplaceservice.exceptions.NotEnoughMoneyException;
 import ru.itmo.marketplaceservice.exceptions.NotFoundException;
@@ -25,6 +25,7 @@ import ru.itmo.marketplaceservice.utils.DtoConverter;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequestMapping(path = "/marketplace")
 @RestController
@@ -37,13 +38,12 @@ public class MarketplaceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MarketplaceItemDto>> getAll(
+    public Mono<ResponseEntity<List<MarketplaceItemDto>>> getAll(
             @Positive @RequestParam(defaultValue = "1") int minPrice,
             @Positive @RequestParam(defaultValue = "1000000") int maxPrice,
             @PositiveOrZero @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String sortOrder
     ) {
-
         Sort sort = null;
         if (sortOrder != null) {
             if (sortOrder.equalsIgnoreCase("asc")) {
@@ -57,29 +57,18 @@ public class MarketplaceController {
                 ? PageRequest.of(page, ControllersConstants.PAGE_SIZE, sort)
                 : PageRequest.of(page, ControllersConstants.PAGE_SIZE);
 
-        Page<MarketplaceItemEntity> resultPage = marketplaceService.findAll(
-                minPrice,
-                maxPrice,
-                pageRequest
-        );
-
-        List<MarketplaceItemDto> resultBody = resultPage.getContent()
-                .stream()
-                .map(DtoConverter::marketplaceItemEntityToDto)
-                .toList();
-
-        return ResponseEntity.ok()
-                .header("X-Total-Count", String.valueOf(resultPage.getTotalElements()))
-                .body(resultBody);
+        return marketplaceService.findAll(minPrice, maxPrice, pageRequest)
+                .map(resultPage -> ResponseEntity.ok()
+                        .header("X-Total-Count", String.valueOf(resultPage.getTotalElements()))
+                        .body(resultPage.getContent().stream()
+                                .map(DtoConverter::marketplaceItemEntityToDto)
+                                .toList()));
     }
 
     @GetMapping("/search")
-    public List<MarketplaceItemDto> getMarketplaceItemsByName(@RequestParam String itemName) {
-        List<MarketplaceItemEntity> marketplaceItemsEntities = marketplaceService.findMarketplaceItemsByName(itemName);
-        return marketplaceItemsEntities
-                .stream()
-                .map(DtoConverter::marketplaceItemEntityToDto)
-                .toList();
+    public Flux<MarketplaceItemDto> getMarketplaceItemsByName(@RequestParam String itemName) {
+        return marketplaceService.findMarketplaceItemsByName(itemName)
+                .map(DtoConverter::marketplaceItemEntityToDto);
     }
 
     @GetMapping("/me")

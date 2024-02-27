@@ -80,7 +80,7 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.just(new ResponseDto<>(null, e, HttpStatus.NOT_FOUND))).block();
     }
 
-    @PostMapping("change-user")
+    @PostMapping("/change-user")
     public ResponseEntity<String> updateUserId(@RequestBody @NotNull @Valid UpdateUserIdDto updateUserIdDto) {
         return itemsService.updateUserId(updateUserIdDto.getItemId(), updateUserIdDto.getUserId())
                 .then(Mono.just(ResponseEntity.ok("user_id успешно изменен")))

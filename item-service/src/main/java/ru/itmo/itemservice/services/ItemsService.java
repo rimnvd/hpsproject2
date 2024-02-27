@@ -52,14 +52,9 @@ public class ItemsService {
                         if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
                             return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
                         }
-//                        userClient.getById(newUserId)
                     } catch (ServiceUnavailableException e) {
                         return Mono.error(new ServiceUnavailableException("Пользователь с id: " + newUserId + " не найден"));
                     }
-
-//                    if (!userClient.getById(newUserId).code().is2xxSuccessful()) {
-//                        return Mono.error(new NotFoundException("Пользователь с id: " + newUserId + " не найден"));
-//                    }
 
                     item.setUserId(newUserId);
                     return itemsRepository.save(item);

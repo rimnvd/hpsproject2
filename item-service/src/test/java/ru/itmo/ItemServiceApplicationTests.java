@@ -2,9 +2,10 @@ package ru.itmo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(webEnvironment = WebEnvironment.NONE)
+@Testcontainers
+@SpringBootTest
 class ItemServiceApplicationTests {
 
     @Test

@@ -13,5 +13,5 @@ public class ItemDto {
     Long id;
     String name;
     String rarity;
-
+    Long userId;
 }
