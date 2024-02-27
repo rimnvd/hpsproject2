@@ -22,7 +22,8 @@ public class AuthController {
 
     @Operation(
             description = "Log in",
-            summary = "Log in to the system"
+            summary = "Log in to the system",
+            tags = "Auth"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success"),
@@ -39,7 +40,8 @@ public class AuthController {
 
     @Operation(
             description = "Register",
-            summary = "New user register"
+            summary = "New user register",
+            tags = "Admin"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User has successfully registered"),

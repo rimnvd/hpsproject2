@@ -40,7 +40,7 @@ public class ItemsController {
     @Operation(
             description = "Generate item for user",
             summary = "Generate random item for user if user exists",
-            tags = "item"
+            tags = "Item"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Item was generated successfully"),
@@ -63,7 +63,7 @@ public class ItemsController {
     @Operation(
             description = "Get by id",
             summary = "Get item by id if exists",
-            tags = "item"
+            tags = "Item"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Item was found successfully"),
@@ -82,7 +82,7 @@ public class ItemsController {
     @Operation(
             description = "Delete item",
             summary = "Delete item by id",
-            tags = "item"
+            tags = "Item"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Item was deleted successfully"),

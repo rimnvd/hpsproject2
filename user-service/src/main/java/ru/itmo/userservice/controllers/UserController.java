@@ -1,5 +1,9 @@
 package ru.itmo.userservice.controllers;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -26,6 +30,17 @@ public class UserController {
 
     private final UserService userService;
 
+    @Operation(
+            description = "Replenish the balance",
+            summary = "Replenish user's balance",
+            tags = "User"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "User not found"),
+
+    })
     @PostMapping("/replenish-balance")
     public ResponseEntity<?> replenishBalance(Principal principal, @RequestBody @NotNull @Min(1) Integer sum) {
         try {
@@ -36,6 +51,12 @@ public class UserController {
         }
     }
 
+    @Operation(
+            description = "Get all users",
+            summary = "Get all user",
+            tags = "User"
+    )
+    @ApiResponse(responseCode = "200", description = "Success")
     @GetMapping
     public List<UserDto> getAllUsers(
             @PageableDefault(sort = {"id"}, size = 50) Pageable pageable
@@ -43,6 +64,18 @@ public class UserController {
         return userService.getAll(pageable);
     }
 
+    @Operation(
+            description = "Buy premium account",
+            summary = "Buy premium account",
+            tags = "User"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "User not found"),
+            @ApiResponse(responseCode = "400", description = "User doesn't have enough money")
+
+    })
     @PostMapping("/buy-premium")
     public ResponseEntity<?> buyPremiumAccount(Principal principal) {
         try {
@@ -55,6 +88,7 @@ public class UserController {
         }
     }
 
+    @Hidden
     @GetMapping("/get-user-by-id")
     public ResponseDto<UserDto> getById(@RequestParam @NotNull @Min(1) Long id) {
         UserDto user = userService.getById(id);
@@ -63,6 +97,8 @@ public class UserController {
         }
         return new ResponseDto<>(user, null, HttpStatus.OK);
     }
+
+    @Hidden
     @GetMapping("/get-user-by-username")
     public ResponseDto<UserDto> findByUsername(@RequestParam @NotNull String username) {
         UserDto user = userService.getByUsername(username);
@@ -72,6 +108,7 @@ public class UserController {
         return new ResponseDto<>(user, null, HttpStatus.OK);
     }
 
+    @Hidden
     @PostMapping("/update-balance")
     public ResponseEntity<String> updateBalance(@RequestBody @Valid UserUpdateBalanceDto userUpdateBalanceDto) {
         try {
