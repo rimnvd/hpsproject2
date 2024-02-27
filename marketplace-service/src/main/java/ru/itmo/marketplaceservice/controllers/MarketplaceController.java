@@ -1,5 +1,8 @@
 package ru.itmo.marketplaceservice.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -25,7 +28,6 @@ import ru.itmo.marketplaceservice.utils.DtoConverter;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequestMapping(path = "/marketplace")
 @RestController
@@ -37,6 +39,12 @@ public class MarketplaceController {
         this.marketplaceService = marketplaceService;
     }
 
+    @Operation(
+            description = "Get all items",
+            summary = "Get all items from the marketplace",
+            tags = "Marketplace"
+    )
+    @ApiResponse(responseCode = "200", description = "Success")
     @GetMapping
     public Mono<ResponseEntity<List<MarketplaceItemDto>>> getAll(
             @Positive @RequestParam(defaultValue = "1") int minPrice,
@@ -65,12 +73,32 @@ public class MarketplaceController {
                                 .toList()));
     }
 
+    @Operation(
+            description = "Search",
+            summary = "Search for the item name",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Item not found on the marketplace or user does not exist")
+    })
     @GetMapping("/search")
     public Flux<MarketplaceItemDto> getMarketplaceItemsByName(@RequestParam String itemName) {
         return marketplaceService.findMarketplaceItemsByName(itemName)
                 .map(DtoConverter::marketplaceItemEntityToDto);
     }
 
+    @Operation(
+            description = "Sell an item",
+            summary = "Put up item for sale on the marketplace",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Item not found on the marketplace or user does not exist")
+    })
     @GetMapping("/me")
     public ResponseEntity<?> getMarketplaceItemsByUser(Principal principal) {
         try {
@@ -85,6 +113,18 @@ public class MarketplaceController {
         }
     }
 
+    @Operation(
+            description = "Sell an item",
+            summary = "Put up item for sale on the marketplace",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights"),
+            @ApiResponse(responseCode = "404", description = "Item not found on the marketplace or user does not exist"),
+            @ApiResponse(responseCode = "400", description = "Item does not belong to user")
+    })
     @PostMapping("/sell")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PREMIUM_USER')")
     public ResponseEntity<?> sellMarketplaceItem(
@@ -105,6 +145,18 @@ public class MarketplaceController {
         }
     }
 
+    @Operation(
+            description = "Buy an item",
+            summary = "Buy an item on the marketplace",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights"),
+            @ApiResponse(responseCode = "404", description = "Item not found on the marketplace or user does not exist"),
+            @ApiResponse(responseCode = "400", description = "User doesn't have enough money")
+    })
     @PostMapping("/buy")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'PREMIUM_USER', 'STANDARD_USER')")
     public ResponseEntity<?> buyMarketplaceItem(
@@ -121,6 +173,16 @@ public class MarketplaceController {
         }
     }
 
+    @Operation(
+            description = "Delete an item from the marketplace",
+            summary = "Delete an item from the marketplace by id if exists",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights")
+    })
     @DeleteMapping("/delete/{itemId}")
     public Mono<ResponseEntity<String>> deleteItemById(@PathVariable @Positive Long itemId) {
         return marketplaceService.deleteMarketplaceItemById(itemId)
@@ -128,6 +190,16 @@ public class MarketplaceController {
                 .onErrorResume(NotFoundException.class, e -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e)));
     }
 
+    @Operation(
+            description = "Delete all items",
+            summary = "Delete all items from the marketplace",
+            tags = "Marketplace"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "No rights")
+    })
     @DeleteMapping("/delete")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<?>> deleteAll() {
