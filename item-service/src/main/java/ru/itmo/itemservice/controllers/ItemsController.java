@@ -136,6 +136,7 @@ public class ItemsController {
                 .onErrorResume(NotFoundException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()))).block();
     }
 
+    @Hidden
     @GetMapping("/example-property")
     public String getExampleProperty() {
         return "Value of example.property: " + refreshingExampleProperty;
